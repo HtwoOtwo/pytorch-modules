@@ -70,12 +70,3 @@ class ResNetLayer(nn.Module):
     def forward(self, x):
         """Forward pass through the ResNet layer."""
         return self.layer(x)
-
-
-if __name__ == "__main__":
-    input = torch.rand(1, 3, 256, 256)
-
-    res = ResNetLayer(3, 6)
-
-    out = res(input)
-    print(out.shape)
