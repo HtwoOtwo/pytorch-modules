@@ -1,6 +1,4 @@
-import torch
-
-from cnns.resnet import ResNetLayer
+from modules.cnns.resnet import ResNetLayer
 from tools.analyze import *
 
 if __name__ == "__main__":
