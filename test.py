@@ -1,10 +1,18 @@
-from modules.cnns.resnet import ResNetLayer
-from tools.analyze import *
+import torch
 
-if __name__ == "__main__":
-    input = torch.rand(1, 3, 256, 256)
+# 定义 x 和 y 的范围
+x_range = torch.arange(0, 3)
+y_range = torch.arange(0, 2)
 
-    res_layer = ResNetLayer(3, 6)
+# 使用 torch.meshgrid 创建网格
+X, Y = torch.meshgrid(x_range, y_range)
 
-    print(count_parameters(res_layer))
-    print(profile_model(res_layer, input))
+# X 和 Y 是生成的网格
+print(X.shape, Y.shape)
+print(X)
+print(Y)
+
+print(X.flatten())
+print(Y.flatten())
+
+

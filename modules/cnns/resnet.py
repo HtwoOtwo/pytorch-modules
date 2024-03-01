@@ -28,9 +28,22 @@ class Conv(nn.Module):
         """Apply convolution, batch normalization and activation to input tensor."""
         return self.act(self.bn(self.conv(x)))
 
-    def forward_fuse(self, x):
-        """Perform transposed convolution of 2D data."""
-        return self.act(self.conv(x))
+
+class ConvTranspose(nn.Module):
+    """Standard convolution with args(ch_in, ch_out, kernel, stride, padding, groups, dilation, activation)."""
+
+    default_act = nn.SiLU()  # default activation
+
+    def __init__(self, c_in, c_out, k=1, s=1, p=None, g=1, d=1, act=True):
+        """Initialize Conv layer with given arguments including activation."""
+        super().__init__()
+        self.conv_transpose = nn.ConvTranspose2d(c_in, c_out, k, s, autopad(k, p, d), groups=g, dilation=d, bias=False)
+        self.bn = nn.BatchNorm2d(c_out)
+        self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
+
+    def forward(self, x):
+        """Apply transpose convolution, batch normalization and activation to input tensor."""
+        return self.act(self.bn(self.conv_transpose(x)))
 
 
 class ResNetBlock(nn.Module):
@@ -48,25 +61,3 @@ class ResNetBlock(nn.Module):
     def forward(self, x):
         """Forward pass through the ResNet block."""
         return F.relu(self.cv3(self.cv2(self.cv1(x))) + self.shortcut(x))
-
-
-class ResNetLayer(nn.Module):
-    """ResNet layer with multiple ResNet blocks."""
-
-    def __init__(self, c_in, c_out, s=1, is_first=False, n=1, e=1):
-        """Initializes the ResNetLayer given arguments."""
-        super().__init__()
-        self.is_first = is_first
-
-        if self.is_first:
-            self.layer = nn.Sequential(
-                Conv(c_in, c_out, k=7, s=2, p=3, act=True), nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-            )
-        else:
-            blocks = [ResNetBlock(c_in, c_out, s, e=e)]
-            blocks.extend([ResNetBlock(e * c_out, c_out, 1, e=e) for _ in range(n - 1)])
-            self.layer = nn.Sequential(*blocks)
-
-    def forward(self, x):
-        """Forward pass through the ResNet layer."""
-        return self.layer(x)
