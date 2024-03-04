@@ -1,18 +1,12 @@
 import torch
+import torch.nn.functional as F
 
-# 定义 x 和 y 的范围
-x_range = torch.arange(0, 3)
-y_range = torch.arange(0, 2)
-
-# 使用 torch.meshgrid 创建网格
-X, Y = torch.meshgrid(x_range, y_range)
-
-# X 和 Y 是生成的网格
-print(X.shape, Y.shape)
-print(X)
-print(Y)
-
-print(X.flatten())
-print(Y.flatten())
+predicted = torch.tensor([0.9, 1.2, 3.2, 4.0])
+target = torch.tensor([1.0, 1.0, 3.0, 4.5])
 
 
+loss_same_order = F.l1_loss(predicted, target)
+loss_different_order = F.l1_loss(predicted, torch.tensor([1.0, 1.0, 3.0, 4.5]))
+
+print(loss_same_order)  # 输出: tensor(0.1750)
+print(loss_different_order)  # 输出: tensor(0.1750)
