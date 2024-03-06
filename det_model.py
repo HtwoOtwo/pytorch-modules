@@ -54,8 +54,8 @@ class DetModelDemo(nn.Module):
 	def loss(self, preds, gt, iou_thres) -> dict:
 		pred_bboxes = preds[..., :-2]
 		pred_clss = preds[..., -2]
-		gt_bboxes = gt.gt_boxes
-		gt_clss = gt.clss
+		gt_bboxes = gt.gt_bboxes
+		gt_clss = gt.gt_clss
 		iou = box_iou(pred_bboxes, gt_bboxes)
 
 		match_preds_idx, match_gts_idx = torch.where(iou > iou_thres)
@@ -64,6 +64,8 @@ class DetModelDemo(nn.Module):
 		new_gt_bboxes = gt_bboxes[match_gts_idx, ...]
 		new_pred_clss = pred_clss[match_preds_idx]
 		new_gt_clss = gt_clss[match_gts_idx]
+
+		print(gt_bboxes)
 
 		bbox_loss = F.binary_cross_entropy_with_logits(new_pred_bboxes, new_gt_bboxes)
 		clss_loss = F.binary_cross_entropy_with_logits(new_pred_clss, new_gt_clss)
@@ -102,13 +104,19 @@ class DetModelDemo(nn.Module):
 
 		half_w, half_h = torch.unsqueeze(center_wh[..., 0] / 2, -1), torch.unsqueeze(center_wh[..., 1] / 2, -1)
 		boxes = torch.cat([center_x - half_w, center_y - half_h, center_x + half_w, center_y + half_h], dim=-1)
+
 		# normalize
 		boxes[..., [0, 2]] = (boxes[..., [0, 2]] / w) * input_w
 		boxes[..., [1, 3]] = (boxes[..., [1, 3]] / h) * input_h
+
+		clamped_boxes = boxes.clone()
+		clamped_boxes[:, 0::2] = torch.clamp(boxes[:, 0::2], min=0, max=input_w)  # 限制 x1 和 x2
+		clamped_boxes[:, 1::2] = torch.clamp(boxes[:, 1::2], min=0, max=input_h)  # 限制 y1 和 y2
+
 		clss = torch.unsqueeze(class_pred[mask], -1)
 		conf = torch.unsqueeze(class_conf[mask], -1)
 
-		detects = torch.cat([boxes, clss, conf], dim=-1)
+		detects = torch.cat([clamped_boxes, clss, conf], dim=-1)
 		return detects
 
 
